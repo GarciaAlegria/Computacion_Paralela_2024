@@ -1,7 +1,7 @@
 #include <iostream> // Para usar cout
 #include <fstream> // Para usar ifstream, ofstream
 #include <cstdlib> // Para usar srand, rand
-#include <ctime> // Para usar time
+#include <ctime> // Para usar time, clock
 #include <sstream> // Para usar stringstream
 #include <vector> // Para usar vector
 #include <algorithm> // Para usar sort
@@ -29,12 +29,18 @@ int main() {
     cout << "Ingrese la cantidad de números aleatorios a generar: ";
     cin >> N; // Leer la cantidad de números aleatorios a generar
 
-    // Generar números aleatorios
+    // Medir el tiempo de generación de números aleatorios
+    clock_t start_gen = clock();
+
     srand(time(0)); // Inicializar la semilla del generador de números aleatorios
     int *numbers = new int[N]; /// Arreglo para almacenar los números aleatorios
     for (int i = 0; i < N; i++) {
         numbers[i] = rand() % 100; // Generar un número aleatorio entre 0 y 99
     }
+
+    clock_t end_gen = clock(); // Medir el tiempo de finalización de la generación
+    double time_gen = double(end_gen - start_gen) * 1000 / CLOCKS_PER_SEC;
+    cout << "Tiempo de generación de números: " << time_gen << " milisegundos." << endl;
 
     // almacenar los números en un archivo
     ofstream outFile("nums.txt");
@@ -48,6 +54,7 @@ int main() {
 
     // Liberar la memoria
     delete[] numbers;
+
     // Leer los números del archivo
     ifstream inFile("nums.txt");
     vector<int> numbersVector;
@@ -65,8 +72,14 @@ int main() {
         return 1;
     }
 
-    // ordenar los números de forma ascendente
+    // Medir el tiempo de ordenamiento de los números
+    clock_t start_sort = clock();
+
     sort(numbersVector.begin(), numbersVector.end());
+
+    clock_t end_sort = clock(); // Medir el tiempo de finalización del ordenamiento
+    double time_sort = double(end_sort - start_sort) * 1000 / CLOCKS_PER_SEC;
+    cout << "Tiempo de ordenamiento de números: " << time_sort << " milisegundos." << endl;
 
     // Escribir los números ordenados en un segundo archivo
     ofstream outFileSorted("nums_orders.txt");
@@ -77,6 +90,6 @@ int main() {
         }
     }
     outFileSorted.close();
-
+    
     return 0;
 }
