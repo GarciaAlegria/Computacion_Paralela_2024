@@ -1,3 +1,11 @@
+/**
+ * Universidad del Valle de Guatemala
+ * Programación Paralela y Distribuida sección 10
+ * Abner Ivan Garcia Alegria 21285
+ * Oscar Esteban Donis Martinez 21610
+ * Laboratorio 2
+ */
+
 #include <iostream> // Para usar cout
 #include <fstream> // Para usar ifstream, ofstream
 #include <cstdlib> // Para usar srand, rand
@@ -8,22 +16,28 @@
 
 using namespace std; // Para no tener que anteponer std::
 
-// Función para determinar si un número es primo
+/**
+ * Función para determinar si un número es primo
+ * @param number Número a verificar si es primo
+ */
 bool isPrime(int number) {
     if (number == 0 || number == 1) {
-        return false;
+        return false; // Si el número es 0 o 1, no es primo
     }
     int divisor; // Variable para almacenar el divisor
     for (divisor = number / 2; number % divisor != 0; --divisor) {
         ;
     }
     if (divisor != 1) {
-        return false;
+        return false; // Si el número no es divisible por ningún número excepto 1 y él mismo, no es primo
     } else {
-        return true;
+        return true; // Si el número es divisible por 1 y él mismo, es primo
     }
 }
 
+/**
+ * Función principal donde se corre el programa
+ */
 int main() {
     int N; // Cantidad de números aleatorios a generar
     cout << "Ingrese la cantidad de números aleatorios a generar: ";
@@ -39,7 +53,7 @@ int main() {
     }
 
     clock_t end_gen = clock(); // Medir el tiempo de finalización de la generación
-    double time_gen = double(end_gen - start_gen) * 1000 / CLOCKS_PER_SEC;
+    double time_gen = double(end_gen - start_gen) * 1000 / CLOCKS_PER_SEC; // Tiempo en milisegundos
     cout << "Tiempo de generación de números: " << time_gen << " milisegundos." << endl;
 
     // almacenar los números en un archivo
@@ -47,10 +61,10 @@ int main() {
     for (int i = 0; i < N; i++) {
         outFile << numbers[i]; // Escribir el número en el archivo
         if (i < N - 1) {
-            outFile << ",";
+            outFile << ","; // Separar los números por comas
         }
     }
-    outFile.close();
+    outFile.close(); // Cerrar el archivo
 
     // Liberar la memoria
     delete[] numbers;
@@ -63,19 +77,19 @@ int main() {
         string line; // Variable para almacenar la línea leída
         while (getline(inFile, line, ',')) {
             int number; // Variable para almacenar el número
-            stringstream(line) >> number;
-            numbersVector.push_back(number);
+            stringstream(line) >> number; // Convertir la línea a número
+            numbersVector.push_back(number); // Agregar el número al vector
         }
-        inFile.close();
+        inFile.close(); // Cerrar el archivo
     } else {
-        cout << "ERROR: No se pudo abrir el archivo." << endl;
-        return 1;
+        cout << "ERROR: No se pudo abrir el archivo." << endl; // Mostrar un mensaje de error
+        return 1; // Terminar el programa con error
     }
 
     // Medir el tiempo de ordenamiento de los números
     clock_t start_sort = clock();
 
-    sort(numbersVector.begin(), numbersVector.end());
+    sort(numbersVector.begin(), numbersVector.end()); // Ordenar los números
 
     clock_t end_sort = clock(); // Medir el tiempo de finalización del ordenamiento
     double time_sort = double(end_sort - start_sort) * 1000 / CLOCKS_PER_SEC;
@@ -86,10 +100,10 @@ int main() {
     for (size_t i = 0; i < numbersVector.size(); i++) {
         outFileSorted << numbersVector[i]; // Escribir el número en el archivo
         if (i < numbersVector.size() - 1) {
-            outFileSorted << ",";
+            outFileSorted << ","; // Separar los números por comas
         }
     }
-    outFileSorted.close();
+    outFileSorted.close(); // Cerrar el archivo
     
     return 0;
 }
