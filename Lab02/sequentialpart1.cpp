@@ -29,10 +29,33 @@ bool isPrime(int number) {
         ;
     }
     if (divisor != 1) {
-        return false; // Si el número no es divisible por ningún número excepto 1 y él mismo, no es primo
+        return false; // Si el número es divisible por otro número a parte de 1 y él mismo, no es primo
     } else {
         return true; // Si el número es divisible por 1 y él mismo, es primo
     }
+}
+
+void par_qsort(int *data, int lo, int hi) //}, int (*compare)(const int *, const int*))
+{
+  if(lo > hi) return;
+  int l = lo;
+  int h = hi;
+  int p = data[(hi + lo)/2];
+
+  while(l <= h){
+    while((data[l] - p) < 0) l++;
+    while((data[h] - p) > 0) h--;
+    if(l<=h){
+      //swap
+      int tmp = data[l];
+      data[l] = data[h];
+      data[h] = tmp;
+      l++; h--;
+    }
+  }
+  //recursive call
+  par_qsort(data, lo, h);
+  par_qsort(data, l, hi);
 }
 
 /**
@@ -89,7 +112,7 @@ int main() {
     // Medir el tiempo de ordenamiento de los números
     clock_t start_sort = clock();
 
-    sort(numbersVector.begin(), numbersVector.end()); // Ordenar los números
+    par_qsort(numbersVector.data(), 0, numbersVector.size() - 1);
 
     clock_t end_sort = clock(); // Medir el tiempo de finalización del ordenamiento
     double time_sort = double(end_sort - start_sort) * 1000 / CLOCKS_PER_SEC;

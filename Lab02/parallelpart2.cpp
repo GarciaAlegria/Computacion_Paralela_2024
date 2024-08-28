@@ -13,6 +13,8 @@
 #include <sstream> // Para usar stringstream
 #include <vector> // Para usar vector
 #include <algorithm> // Para usar sort
+#include <random> // Para usar random
+#include <chrono> // Para usar chrono
 #include <omp.h> // Para usar OpenMP para paralelizar 
 
 using namespace std; // Para no tener que anteponer std::
@@ -32,10 +34,78 @@ bool isPrime(int number) {
         ; // Buscamos el primero divisor o hasta que el número sea 1
     }
     if (divisor != 1) {
-        return false; // Si el número no es divisible por ningún número excepto 1 y él mismo, no es primo
+        return false; // Si el número es divisible por otro número a parte de 1 y él mismo, no es primo
     } else {
         return true; // Si el número es divisible por 1 y él mismo, es primo
     }
+}
+
+/**
+ * Función para generar números aleatorios seguro para paralelización
+ * @param N Cantidad de números a generar
+ * @param min Valor mínimo para los números
+ * @param max Valor máximo para los números
+ */
+std::vector<int> generate_random_numbers(int N, int min, int max) {
+    std::vector<int> numbers(N);
+    
+    #pragma omp parallel
+    {
+        // Create a thread-local random number generator
+        unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count() + omp_get_thread_num();
+        std::mt19937 generator(seed);
+        std::uniform_int_distribution<int> distribution(min, max);
+
+        #pragma omp for
+        for (int i = 0; i < N; i++) {
+            numbers[i] = distribution(generator);
+        }
+    }
+    
+    return numbers;
+}
+
+/**
+ * Función para comparar dos números
+ * @param a Primer número
+ * @param b Segundo número
+ */
+int compare(const void* a, const void* b) {
+    return (*(int*)a - *(int*)b);
+}
+
+/**
+ * Función para ordenar de forma paralela un arreglo utilizando QuickSort
+ * @param data Arreglo a ordenar
+ * @param lo Índice inferior
+ * @param hi Índice superior
+ * @param compare Función para comparar dos números
+ */
+void par_qsort(int* data, int lo, int hi, int (*compare)(const void*, const void*)) {
+    if (lo >= hi) return;
+
+    int l = lo;
+    int h = hi;
+    int p = data[(hi + lo) / 2];
+
+    while (l <= h) {
+        while (compare(&data[l], &p) < 0) l++;
+        while (compare(&data[h], &p) > 0) h--;
+        if (l <= h) {
+            int tmp = data[l];
+            data[l] = data[h];
+            data[h] = tmp;
+            l++; h--;
+        }
+    }
+
+    #pragma omp task if (h - lo > 1000)
+    par_qsort(data, lo, h, compare);
+
+    #pragma omp task if (hi - l > 1000)
+    par_qsort(data, l, hi, compare);
+
+    #pragma omp taskwait
 }
 
 /**
@@ -51,10 +121,11 @@ int main() {
 
     double start_gen = omp_get_wtime(); // Medir el tiempo de generación de números aleatorios
 
-    #pragma omp parallel for // Paralelizar el ciclo for
-    for (int i = 0; i < N; i++) {
-        numbers[i] = rand() % 100; // Generar un número aleatorio entre 0 y 99
-    }
+    unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count() + omp_get_thread_num();
+    std::mt19937 generator(seed);
+    std::uniform_int_distribution<int> distribution(min, max);
+
+    std::vector<int> numbers = generate_random_numbers(N, 0, 99);
 
     double end_gen = omp_get_wtime(); // Medir el tiempo de finalización de la generación
     double time_gen = double(end_gen - start_gen) * 1000 / CLOCKS_PER_SEC; // Tiempo en milisegundos 
@@ -90,12 +161,10 @@ int main() {
     // Medir el tiempo de ordenamiento de los números
     double start_sort = omp_get_wtime(); // Inicializar el tiempo de inicio del ordenamiento
 
-    #pragma omp parallel // Paralelizar el bloque de código
+    #pragma omp parallel
     {
-        #pragma omp single nowait // Paralelizar el ordenamiento
-        {
-            sort(numbersVector.begin(), numbersVector.end()); // Ordenar los números
-        }
+        #pragma omp single
+        par_qsort(numbersVector.data(), 0, numbersVector.size() - 1, compare);
     }
 
     double end_sort = omp_get_wtime(); // Medir el tiempo de finalización del ordenamiento
