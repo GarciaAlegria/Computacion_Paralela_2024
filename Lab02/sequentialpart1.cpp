@@ -80,7 +80,7 @@ int main() {
     cout << "Tiempo de generación de números: " << time_gen << " milisegundos." << endl;
 
     // almacenar los números en un archivo
-    ofstream outFile("nums.txt");
+    ofstream outFile("nums.csv");
     for (int i = 0; i < N; i++) {
         outFile << numbers[i]; // Escribir el número en el archivo
         if (i < N - 1) {
@@ -93,7 +93,7 @@ int main() {
     delete[] numbers;
 
     // Leer los números del archivo
-    ifstream inFile("nums.txt");
+    ifstream inFile("nums.csv");
     vector<int> numbersVector;
     // if para verificar si el archivo se abrió correctamente
     if (inFile.is_open()) {
@@ -119,7 +119,7 @@ int main() {
     cout << "Tiempo de ordenamiento de números: " << time_sort << " milisegundos." << endl;
 
     // Escribir los números ordenados en un segundo archivo
-    ofstream outFileSorted("nums_orders.txt");
+    ofstream outFileSorted("nums_orders.csv");
     for (size_t i = 0; i < numbersVector.size(); i++) {
         outFileSorted << numbersVector[i]; // Escribir el número en el archivo
         if (i < numbersVector.size() - 1) {

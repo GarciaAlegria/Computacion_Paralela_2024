@@ -6,179 +6,132 @@
  * Laboratorio 2
  */
 
-#include <iostream> // Para usar cout
-#include <fstream> // Para usar ifstream, ofstream
-#include <cstdlib> // Para usar srand, rand
-#include <ctime> // Para usar time, clock
-#include <sstream> // Para usar stringstream
-#include <vector> // Para usar vector
-#include <algorithm> // Para usar sort
-#include <random> // Para usar random
-#include <chrono> // Para usar chrono
-#include <omp.h> // Para usar OpenMP para paralelizar 
+#include <iostream> // cout, cin
+#include <fstream> // ofstream, ifstream
+#include <cstdlib> // srand, rand
+#include <ctime> // time
+#include <sstream> // stringstream
+#include <vector> // vector
+#include <algorithm> // sort
+#include <omp.h> // OpenMP
 
-using namespace std; // Para no tener que anteponer std::
-
-/**
- * Función para determinar si un número es primo
- * @param number Número a verificar si es primo
- */
+using namespace std; // std::cout, std::cin
+// Función para determinar si un número es primo
 bool isPrime(int number) {
-    // Verificamos si el número es 0 o 1
     if (number == 0 || number == 1) {
-        return false; // Si el número es 0 o 1, no es primo
+        return false; // 0 y 1 no son primos
     }
     int divisor; // Variable para almacenar el divisor
-
     for (divisor = number / 2; number % divisor != 0; --divisor) {
-        ; // Buscamos el primero divisor o hasta que el número sea 1
+        ;
     }
     if (divisor != 1) {
-        return false; // Si el número es divisible por otro número a parte de 1 y él mismo, no es primo
+        return false; // Si encontramos un divisor diferente de 1 y number, entonces no es primo
     } else {
-        return true; // Si el número es divisible por 1 y él mismo, es primo
+        return true; // Si no encontramos ningún divisor diferente de 1 y number, entonces es primo
     }
 }
+// Función para ordenar un array de enteros de forma paralela
+void par_qsort(int *data, int lo, int hi) {
+    if (lo < hi) {
+        int l = lo; // Variable para el índice inferior
+        int h = hi; // Variable para el índice superior
+        int p = data[(hi + lo) / 2]; // Variable para el pivote
 
-/**
- * Función para generar números aleatorios seguro para paralelización
- * @param N Cantidad de números a generar
- * @param min Valor mínimo para los números
- * @param max Valor máximo para los números
- */
-std::vector<int> generate_random_numbers(int N, int min, int max) {
-    std::vector<int> numbers(N);
-    
-    #pragma omp parallel
-    {
-        // Create a thread-local random number generator
-        unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count() + omp_get_thread_num();
-        std::mt19937 generator(seed);
-        std::uniform_int_distribution<int> distribution(min, max);
-
-        #pragma omp for
-        for (int i = 0; i < N; i++) {
-            numbers[i] = distribution(generator);
+        while (l <= h) {
+            while (data[l] < p) l++; // Mientras el valor en el índice inferior sea menor al pivote, incrementar el índice inferior
+            while (data[h] > p) h--; // Mientras el valor en el índice superior sea mayor al pivote, decrementar el índice superior
+            // Si el índice inferior es menor o igual al índice superior, intercambiar los valores en los índices inferior y superior
+            if (l <= h) {
+                int tmp = data[l]; // Variable temporal para intercambiar los valores
+                data[l] = data[h]; // Intercambiar los valores
+                data[h] = tmp; // Intercambiar los valores
+                l++; h--; // Incrementar el índice inferior y decrementar el índice superior
+            }
         }
-    }
-    
-    return numbers;
-}
+        int Theshold = 100;  // Tamaño del array para el cual se ejecutará el algoritmo de forma paralela
 
-/**
- * Función para comparar dos números
- * @param a Primer número
- * @param b Segundo número
- */
-int compare(const void* a, const void* b) {
-    return (*(int*)a - *(int*)b);
-}
-
-/**
- * Función para ordenar de forma paralela un arreglo utilizando QuickSort
- * @param data Arreglo a ordenar
- * @param lo Índice inferior
- * @param hi Índice superior
- * @param compare Función para comparar dos números
- */
-void par_qsort(int* data, int lo, int hi, int (*compare)(const void*, const void*)) {
-    if (lo >= hi) return;
-
-    int l = lo;
-    int h = hi;
-    int p = data[(hi + lo) / 2];
-
-    while (l <= h) {
-        while (compare(&data[l], &p) < 0) l++;
-        while (compare(&data[h], &p) > 0) h--;
-        if (l <= h) {
-            int tmp = data[l];
-            data[l] = data[h];
-            data[h] = tmp;
-            l++; h--;
+        if (hi - lo < Theshold) {
+            par_qsort(data, lo, h); // Llamada recursiva para ordenar la mitad inferior del array
+            par_qsort(data, l, hi); // Llamada recursiva para ordenar la mitad superior del array
+            
+        } else {
+            #pragma omp task shared(data) // Crear una tarea compartiendo el array de datos
+            par_qsort(data, lo, h); // Llamada recursiva para ordenar la mitad inferior del array
+            
+            #pragma omp task shared(data)  // Crear una tarea compartiendo el array de datos
+            par_qsort(data, l, hi); // Llamada recursiva para ordenar la mitad superior del array
         }
+
+        
     }
-
-    #pragma omp task if (h - lo > 1000)
-    par_qsort(data, lo, h, compare);
-
-    #pragma omp task if (hi - l > 1000)
-    par_qsort(data, l, hi, compare);
-
-    #pragma omp taskwait
 }
 
-/**
- * Función principal donde se corre el programa
- */
+// Función principal
 int main() {
-    int N; // Cantidad de números aleatorios a generar
-    cout << "Ingrese la cantidad de números aleatorios a generar: ";
+    int N; // Variable para almacenar la cantidad de números aleatorios a generar
+    cout << "Ingrese la cantidad de números aleatorios a generar: "; // Solicitar al usuario la cantidad de números aleatorios a generar
     cin >> N; // Leer la cantidad de números aleatorios a generar
 
-    srand(time(0)); // Inicializar la semilla del generador de números aleatorios
-    int *numbers = new int[N]; // Arreglo para almacenar los números aleatorios
+    double start_gen = omp_get_wtime(); // Iniciar el cronómetro para medir el tiempo de generación de números
 
-    double start_gen = omp_get_wtime(); // Medir el tiempo de generación de números aleatorios
+    srand(time(0)); // Semilla para generar números aleatorios
+    int *numbers = new int[N]; // Array para almacenar los números aleatorios
+    for (int i = 0; i < N; i++) {
+        numbers[i] = rand() % 100; // Generar un número aleatorio entre 0 y 99
+    }
 
-    unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count() + omp_get_thread_num();
-    std::mt19937 generator(seed);
-    std::uniform_int_distribution<int> distribution(min, max);
+    double end_gen = omp_get_wtime(); // Detener el cronómetro para medir el tiempo de generación de números
+    double time_gen = (end_gen - start_gen) * 1000; // Calcular el tiempo de generación de números en milisegundos
+    cout << "Tiempo de generación de números: " << time_gen << " milisegundos." << endl; // Mostrar el tiempo de generación de números
 
-    std::vector<int> numbers = generate_random_numbers(N, 0, 99);
-
-    double end_gen = omp_get_wtime(); // Medir el tiempo de finalización de la generación
-    double time_gen = double(end_gen - start_gen) * 1000 / CLOCKS_PER_SEC; // Tiempo en milisegundos 
-    cout << "Tiempo de generación de números (paralelizado): " << time_gen << " ms." << endl;
-
-    ofstream outFile("numsparallel.txt"); // Crear un archivo para almacenar los números generados
+    ofstream outFile("numspa.csv"); // Crear un archivo para almacenar los números aleatorios
     for (int i = 0; i < N; i++) {
         outFile << numbers[i]; // Escribir el número en el archivo
         if (i < N - 1) {
-            outFile << ",";
+            outFile << ","; // Si no es el último número, escribir una coma
         }
     }
     outFile.close(); // Cerrar el archivo
 
-    delete[] numbers; // Liberar la memoria
-
-    ifstream inFile("numsparallel.txt"); // Leer los números del archivo
-    vector<int> numbersVector; // Vector para almacenar los números
-
+    ifstream inFile("numspa.csv"); // Abrir el archivo con los números aleatorios
+    vector<int> numbersVector; // Vector para almacenar los números del archivo
     if (inFile.is_open()) {
-        string line; // Variable para almacenar la línea leída del archivo
+        string line; // Variable para leer una línea del archivo
         while (getline(inFile, line, ',')) {
             int number; // Variable para almacenar el número
-            stringstream(line) >> number; // Convertir la línea a número
+            stringstream(line) >> number; // Convertir la línea a un número
             numbersVector.push_back(number); // Agregar el número al vector
         }
         inFile.close(); // Cerrar el archivo
     } else {
-        cout << "No se pudo abrir el archivo." << endl; // Mostrar un mensaje de error
+        cout << "ERROR: No se pudo abrir el archivo." << endl; // Mostrar un mensaje de error si no se pudo abrir el archivo
         return 1; // Terminar el programa con error
     }
 
-    // Medir el tiempo de ordenamiento de los números
-    double start_sort = omp_get_wtime(); // Inicializar el tiempo de inicio del ordenamiento
+    double start_sort = omp_get_wtime(); // Iniciar el cronómetro para medir el tiempo de ordenamiento de números
 
-    #pragma omp parallel
+    #pragma omp parallel // Iniciar la región paralela
     {
-        #pragma omp single
-        par_qsort(numbersVector.data(), 0, numbersVector.size() - 1, compare);
+        #pragma omp single nowait // Crear una tarea única sin esperar a que termine
+        par_qsort(numbersVector.data(), 0, numbersVector.size() - 1); // Llamar a la función de ordenamiento paralelo
     }
 
-    double end_sort = omp_get_wtime(); // Medir el tiempo de finalización del ordenamiento
-    double time_sort = double(end_sort - start_sort) * 1000/ CLOCKS_PER_SEC ; // Tiempo en milisegundos
-    cout << "Tiempo de ordenamiento de números (paralelizado): " << time_sort << " ms." << endl;
+    double end_sort = omp_get_wtime(); // Detener el cronómetro para medir el tiempo de ordenamiento de números
+    double time_sort = (end_sort - start_sort) * 1000; // Calcular el tiempo de ordenamiento de números en milisegundos
+    cout << "Tiempo de ordenamiento de números: " << time_sort << " milisegundos." << endl; // Mostrar el tiempo de ordenamiento de números
 
-    ofstream outFileSorted("numsparallel_orders.txt"); // Crear un archivo para almacenar los números ordenados
+    ofstream outFileSorted("nums_sorted_parallel.csv"); // Crear un archivo para almacenar los números ordenados
     for (size_t i = 0; i < numbersVector.size(); i++) {
         outFileSorted << numbersVector[i]; // Escribir el número en el archivo
         if (i < numbersVector.size() - 1) {
-            outFileSorted << ","; // Agregar una coma si no es el último número
+            outFileSorted << ","; // Si no es el último número, escribir una coma
         }
     }
     outFileSorted.close(); // Cerrar el archivo
 
-    return 0; // Terminar el programa con éxito
+    // cerrar array
+    delete[] numbers; // Liberar la memoria del array de números
+
+    return 0;
 }
