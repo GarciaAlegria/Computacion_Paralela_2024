@@ -16,6 +16,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 void Read_n(int* n_p);
 void Allocate_vectors(double** x_pp, double** y_pp, double** z_pp, int n);
@@ -25,18 +26,50 @@ void Vector_sum(double x[], double y[], double z[], int n);
 
 /*---------------------------------------------------------------------*/
 int main(void) {
-   int n;
+   int n = 125000;  // Tamaño de los vectores
    double *x, *y, *z;
+   clock_t start, end;
+   double cpu_time_used;
 
-   Read_n(&n);
+   // Obtener el tiempo de inicio
+   start = clock();
+
    Allocate_vectors(&x, &y, &z, n);
    
-   Read_vector(x, n, "x");
-   Read_vector(y, n, "y");
-   
+   // Generar valores aleatorios para los vectores x e y
+   srand(time(NULL));
+   for (int i = 0; i < n; i++) {
+      x[i] = (double)rand() / RAND_MAX;  // Valor entre 0 y 1
+      y[i] = (double)rand() / RAND_MAX;
+   }
+
+   // Realizar la suma de vectores
    Vector_sum(x, y, z, n);
 
-   Print_vector(z, n, "The sum is");
+   // Obtener el tiempo de finalización
+   end = clock();
+
+   // Calcular el tiempo de CPU utilizado
+   cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+
+   // Imprimir el tiempo de ejecución
+   printf("\nTiempo de ejecución: %f segundos con n = %d\n\n", cpu_time_used, n);
+
+   // Imprimir los primeros y últimos 10 elementos de cada vector, así como el resultado
+   Print_vector(x, 10, "Primeros 10 elementos de x:");
+   Print_vector(x + (n - 10), 10, "Últimos 10 elementos de x:");
+
+   printf("\n");
+   
+   Print_vector(y, 10, "Primeros 10 elementos de y:");
+   Print_vector(y + (n - 10), 10, "Últimos 10 elementos de y:");
+
+   printf("\n");
+   
+   Print_vector(z, 10, "Primeros 10 elementos de z (resultado):");
+   Print_vector(z + (n - 10), 10, "Últimos 10 elementos de z (resultado):");
+
+   printf("\n");
 
    free(x);
    free(y);
