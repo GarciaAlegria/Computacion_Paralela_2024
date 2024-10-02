@@ -24,7 +24,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi.h>
+#include <time.h>
+#include <mpi/mpi.h>
 
 void Check_for_error(int local_ok, char fname[], char message[],
       MPI_Comm comm);
@@ -53,20 +54,20 @@ int main(void) {
    MPI_Comm_size(comm, &comm_sz);
    MPI_Comm_rank(comm, &my_rank);
 
-   //Read_n(&n, &local_n, my_rank, comm_sz, comm);
-   n = 10000000;
+   Read_n(&n, &local_n, my_rank, comm_sz, comm);
+   n = 125000; // cantidad de elementos en el vector
    tstart = MPI_Wtime();
    Allocate_vectors(&local_x, &local_y, &local_z, local_n, comm);
 
    Read_vector(local_x, local_n, n, "x", my_rank, comm);
-   //Print_vector(local_x, local_n, n, "x is", my_rank, comm);
+   Print_vector(local_x, local_n, n, "x is", my_rank, comm);
    Read_vector(local_y, local_n, n, "y", my_rank, comm);
-   //Print_vector(local_y, local_n, n, "y is", my_rank, comm);
+   Print_vector(local_y, local_n, n, "y is", my_rank, comm);
 
    Parallel_vector_sum(local_x, local_y, local_z, local_n);
    tend = MPI_Wtime();
 
-   //Print_vector(local_z, local_n, n, "The sum is", my_rank, comm);
+   Print_vector(local_z, local_n, n, "The sum is", my_rank, comm);
    if(my_rank==0)
     printf("\nTook %f ms to run\n", (tend-tstart)*1000);
 
@@ -218,9 +219,10 @@ void Read_vector(
       Check_for_error(local_ok, fname, "Can't allocate temporary vector",
             comm);
       //printf("Enter the vector %s\n", vec_name);
-      //fill vec with indez
+      //fill vec with random number
       for (i = 0; i < n; i++)
-         a[i] = i;
+         a[i] = (double)rand() / RAND_MAX; 
+
       MPI_Scatter(a, local_n, MPI_DOUBLE, local_a, local_n, MPI_DOUBLE, 0,
          comm);
       free(a);
@@ -271,9 +273,17 @@ void Print_vector(
       MPI_Gather(local_b, local_n, MPI_DOUBLE, b, local_n, MPI_DOUBLE,
             0, comm);
       printf("%s\n", title);
-      for (i = 0; i < n; i++)
+      
+      printf("\nPrimeros 10 \n");
+      for (i = 0; i < 10; i++)
          printf("%f ", b[i]);
+
+      printf("\nÚltimos 10 \n");
+      for (i = n - 10; i < n; i++)
+         printf("%f ", b[i]);
+
       printf("\n");
+
       free(b);
    } else {
       Check_for_error(local_ok, fname, "Can't allocate temporary vector",
