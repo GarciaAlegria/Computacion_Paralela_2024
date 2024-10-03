@@ -1,3 +1,8 @@
+// Universidad del Valle de Guatemala
+// Programación Paralela y Distribuida sección 10
+// Abner Ivan Garcia Alegria 21285
+// Corto 2
+
 #include <stdio.h>
 #include <omp.h>
 #include <time.h>
@@ -22,12 +27,12 @@ int fib_recursive_omp_fix(int n) {
         return fib_recursive(n);
 
     int x, y;
-
+    // Se crean tareas para calcular los valores de Fibonacci de n-1 y n-2
     #pragma omp task shared(x)
     x = fib_recursive_omp_fix(n - 1);
     #pragma omp task shared(y)
     y = fib_recursive_omp_fix(n - 2);
-
+    // Se espera a que ambas tareas terminen
     #pragma omp taskwait
     return x + y;
 }
@@ -37,14 +42,14 @@ int main() {
     printf("Ingrese un número: ");
     scanf("%d", &n);
 
-    clock_t start = clock();
+    clock_t start = clock(); // Se inicia el contador de tiempo
     #pragma omp parallel
     {
         #pragma omp single
         {
-            int result = fib_recursive_omp_fix(n);
-            clock_t end = clock();
-            double time_taken = (double)(end - start) / CLOCKS_PER_SEC;
+            int result = fib_recursive_omp_fix(n); // Se llama a la función recursiva con OpenMP y Threshold
+            clock_t end = clock(); // Se finaliza el contador de tiempo
+            double time_taken = (double)(end - start) / CLOCKS_PER_SEC; // Se calcula el tiempo de ejecución
 
             printf("Fibonacci(%d) = %d\n", n, result);
             printf("Tiempo de ejecución con OpenMP y Threshold: %f segundos\n", time_taken);
