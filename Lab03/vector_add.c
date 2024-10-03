@@ -26,7 +26,7 @@ void Vector_sum(double x[], double y[], double z[], int n);
 
 /*---------------------------------------------------------------------*/
 int main(void) {
-   int n = 125000;  // Tamaño de los vectores
+   int n = 110000000;  // Tamaño de los vectores
    double *x, *y, *z;
    clock_t start, end;
    double cpu_time_used;

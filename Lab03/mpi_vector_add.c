@@ -55,7 +55,7 @@ int main(void) {
    MPI_Comm_rank(comm, &my_rank);
 
    Read_n(&n, &local_n, my_rank, comm_sz, comm);
-   n = 125000; // cantidad de elementos en el vector
+   n = 110000000; // cantidad de elementos en el vector
    tstart = MPI_Wtime();
    Allocate_vectors(&local_x, &local_y, &local_z, local_n, comm);
 
@@ -69,7 +69,7 @@ int main(void) {
 
    Print_vector(local_z, local_n, n, "The sum is", my_rank, comm);
    if(my_rank==0)
-    printf("\nTook %f ms to run\n", (tend-tstart)*1000);
+    printf("\nTook %f s to run\n", (tend-tstart));
 
    free(local_x);
    free(local_y);
