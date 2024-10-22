@@ -1,6 +1,7 @@
 // Universidad del Valle de Guatemala
 // Programación Paralela y Distribuida sección 10
 // Abner Ivan Garcia Alegria 21285
+// Este es el MPI
 // Laboratorio 4
 
 // Se importan librerias necesarias para el programa y se definen las funciones a utilizar en el programa
